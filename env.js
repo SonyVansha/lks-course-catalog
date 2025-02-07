@@ -10,6 +10,7 @@ const production = {
    aws: {
       accessKey: process.env.AWS_ACCESS_KEY,
       secretKey: process.env.AWS_SECRET_KEY,
+      sessionToken: process.env.AWS_SESSION_TOKEN,
       bucketName: process.env.AWS_BUCKET_NAME,
       bucketRegion: process.env.AWS_BUCKET_REGION,
       cfUrl: process.env.AWS_CF_URL,
@@ -43,12 +44,14 @@ const testing = {
    aws: {
       accessKey: process.env.AWS_ACCESS_KEY,
       secretKey: process.env.AWS_SECRET_KEY,
+      sessionToken: process.env.AWS_SESSION_TOKEN, // Tambahkan session token di sini
       bucketName: process.env.AWS_BUCKET_NAME,
       bucketRegion: process.env.AWS_BUCKET_REGION,
       cfUrl: process.env.AWS_CF_URL,
       cfPrivateKey: process.env.AWS_CF_PRIVATE_KEY,
       cfKeyPairId: process.env.AWS_CF_KEY_PAIR_ID,
    },
+   
    sequelize: {
       dbName: process.env.AWS_DB_NAME,
       dbUser: process.env.AWS_DB_USER,
@@ -77,6 +80,7 @@ const dev = {
    aws: {
       accessKeyId: process.env.AWS_ACCESS_KEY,
       secretKey: process.env.AWS_SECRET_KEY,
+      sessionToken: process.env.AWS_SESSION_TOKEN,
       bucketName: process.env.AWS_BUCKET_NAME,
       bucketRegion: process.env.AWS_BUCKET_REGION,
       cfUrl: process.env.AWS_CF_URL,
