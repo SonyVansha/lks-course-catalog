@@ -170,6 +170,9 @@ Permission in AWS S3
 }
 ```
 
+## Postman Documentation API: 
+### [link](https://documenter.getpostman.com/view/32005248/2sAYX8Kh2Q)
+
 ## License
 
 MIT
