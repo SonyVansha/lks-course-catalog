@@ -51,9 +51,6 @@ Course Catalog Service is using several services that exist in AWS such as S3, R
 |--|--|--|
 | **AWS_BUCKET_NAME** | String | Bucket name is use to store assets data like catalog *thumnail*. |
 |**AWS_BUCKET_REGION**| String | Region of the bucket is used |
-| **AWS_CF_KEY_PAIR_ID** | SecureString | CloudFront public key pair id |
-| **AWS_CF_PRIVATE_KEY** | SecureString | CloudFront private key |
-| **AWS_CF_URL** | String | CloudFont distribution URL |
 | **DB_HOST** | String | Database host |
 | **DB_NAME** | String | Database name |
 | **DB_USER** | String | Database username |
