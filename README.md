@@ -151,6 +151,28 @@ This is the example of config.json file for ECR credential:
 ```
 > **Note:** Dont forget to give permission aws beanstalk to get object from S3. You can create the ECR auth token with aws cli command `aws ecr get-login-password --region {{ECR_REGION}}` and copy the result to config.json file.
 
+Permission in AWS S3
+
+```json
+{
+  "Id": "Policy1738998387905",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "Stmt1738998382342",
+      "Action": [
+        "s3:DeleteObject",
+        "s3:GetObject",
+        "s3:PutObject"
+      ],
+      "Effect": "Allow",
+      "Resource": "arn:aws:s3:::mybucket-sony/*",
+      "Principal": "*"
+    }
+  ]
+}
+```
+
 ## License
 
 MIT

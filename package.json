@@ -6,7 +6,7 @@
    "scripts": {
       "test": "NODE_ENV=testing PORT=9000 MOCHA_FILE=./report/test-result.xml mocha --timeout 30000 --exit --reporter mocha-junit-reporter",
       "testdev": "NODE_ENV=testing PORT=9000 mocha --timeout 30000 --exit",
-      "dev": "cross-env NODE_ENV=development PORT=8000 nodemon app.js",
+      "dev": "cross-env NODE_ENV=testing PORT=8080 nodemon app.js",
       "start": "NODE_ENV=production PORT=8000 node app.js"
    },
    "author": "Betuah Anugerah",
@@ -14,6 +14,7 @@
    "dependencies": {
       "@aws-sdk/client-ssm": "^3.168.0",
       "@aws-sdk/cloudfront-signer": "^3.162.0",
+      "@aws-sdk/s3-request-presigner": "^3.744.0",
       "aws-param-env": "^2.1.0",
       "aws-sdk": "^2.1192.0",
       "bcrypt": "^5.0.1",

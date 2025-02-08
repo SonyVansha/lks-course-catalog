@@ -1,9 +1,11 @@
 const uuid = require("uuid");
-const { getSignedUrl } = require("@aws-sdk/cloudfront-signer");
+// const { getSignedUrl } = require("@aws-sdk/cloudfront-signer");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const {
    S3Client,
    PutObjectCommand,
    DeleteObjectCommand,
+   GetObjectCommand,
 } = require("@aws-sdk/client-s3");
 const env = require("../env");
 const Course = require("../models/course_model");
@@ -12,6 +14,7 @@ const aws_s3 = new S3Client({
    credentials: {
       accessKeyId: process.env.AWS_ACCESS_KEY,
       secretAccessKey: process.env.AWS_SECRET_KEY,
+      sessionToken: process.env.AWS_SESSION_TOKEN,
    },
    region: process.env.AWS_BUCKET_REGION,
 });
@@ -19,23 +22,26 @@ const aws_s3 = new S3Client({
 exports.index = async (req, res) => {
    try {
       const course = await Course.findAll();
-      const courseData = course.map((i) => {
-         let imgUrl;
 
-         if (i.dataValues.coursePics) {
-            imgUrl = getSignedUrl({
-               url: `${process.env.AWS_CF_URL}/${i.coursePics}`,
-               dateLessThan: new Date(Date.now() + 1000 * 60 * 60 * 24),
-               keyPairId: process.env.AWS_CF_KEY_PAIR_ID,
-               privateKey: process.env.AWS_CF_PRIVATE_KEY,
-            });
-         }
+      const courseData = await Promise.all(
+         course.map(async (i) => {
+            let imgUrl = null;
 
-         return {
-            ...i.dataValues,
-            coursePics: imgUrl,
-         };
-      });
+            if (i.dataValues.coursePics) {
+               const command = new GetObjectCommand({
+                  Bucket: process.env.AWS_BUCKET_NAME,
+                  Key: i.coursePics,
+               });
+
+               imgUrl = await getSignedUrl(aws_s3, command, { expiresIn: 86400 }); // Expire in 24 hours
+            }
+
+            return {
+               ...i.dataValues,
+               coursePics: imgUrl,
+            };
+         })
+      );
 
       res.status(200).json({
          status: "SUCCESS",
@@ -44,7 +50,6 @@ exports.index = async (req, res) => {
          data: courseData,
       });
    } catch (error) {
-      // console.log(new Error(error));
       res.status(500).json({
          status: "ERROR",
          error_code: error.name || "ERR_INTRL_SRV_ERR",
@@ -59,35 +64,35 @@ exports.getById = async (req, res) => {
    try {
       const id = req.params.courseId;
       const courseData = await Course.findByPk(id);
-      let imgUrl;
-      if (courseData == null) {
-         res.status(404).json({
+
+      if (!courseData) {
+         return res.status(404).json({
             status: "ERROR",
             error_code: "dataNotFound",
             message: "Course not found!",
          });
-         return;
       }
+
+      let imgUrl = null;
       if (courseData.coursePics) {
-         imgUrl = getSignedUrl({
-            url: `${process.env.AWS_CF_URL}/${courseData.coursePics}`,
-            dateLessThan: new Date(Date.now() + 1000 * 60 * 60 * 24),
-            keyPairId: process.env.AWS_CF_KEY_PAIR_ID,
-            privateKey: process.env.AWS_CF_PRIVATE_KEY,
+         const command = new GetObjectCommand({
+            Bucket: process.env.AWS_BUCKET_NAME,
+            Key: courseData.coursePics,
          });
+
+         imgUrl = await getSignedUrl(aws_s3, command, { expiresIn: 86400 }); // Expire in 24 jam
       }
-      const data = {
-         ...courseData.dataValues,
-         coursePics: imgUrl || null,
-      };
+
       res.status(200).json({
          status: "SUCCESS",
          error_code: "",
          message: "Data found!",
-         data: data,
+         data: {
+            ...courseData.dataValues,
+            coursePics: imgUrl,
+         },
       });
    } catch (error) {
-      // console.log(new Error(error));
       res.status(500).json({
          status: "ERROR",
          error_code: error.name || "ERR_INTRL_SRV_ERR",
@@ -230,24 +235,30 @@ exports.delete = async (req, res) => {
    try {
       const courseId = req.params.courseId;
       const course = await Course.findByPk(courseId);
-      if (course == null) {
-         res.status(404).json({
+      
+      if (!course) {
+         return res.status(404).json({
             status: "ERROR",
             error_code: "dataNotFound",
             message: "Course not found!",
          });
-         return;
       }
 
+      // Mengecek apakah ada gambar (coursePics) yang perlu dihapus dari S3
       if (course.coursePics !== null) {
          const params = {
-            Bucket: process.env.AWS_BUCKET_NAME,
-            Key: course.coursePics,
+            Bucket: process.env.AWS_BUCKET_NAME, // Nama bucket S3 dari .env
+            Key: course.coursePics, // Key gambar di S3
          };
+
+         // Perintah untuk menghapus objek dari S3
          const command = new DeleteObjectCommand(params);
+
+         // Menghapus file dari S3
          await aws_s3.send(command);
       }
 
+      // Menghapus course dari database
       await Course.destroy({ where: { courseId } });
 
       res.status(200).json({
@@ -256,7 +267,8 @@ exports.delete = async (req, res) => {
          message: "Delete course success!",
       });
    } catch (error) {
-      // console.log(new Error(error));
+      console.error(error); // Mencatat error di log untuk debugging
+
       res.status(500).json({
          status: "ERROR",
          error_code: error.name || "ERR_INTRL_SRV_ERR",
@@ -266,6 +278,7 @@ exports.delete = async (req, res) => {
       });
    }
 };
+
 
 exports.check = async (req, res) => {
    res.status(200).send("Its works!");
